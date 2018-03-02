@@ -51,9 +51,10 @@ TEST_CASE("Network - Http", "[Network, Http]")
         
         beast::error_code error;
         
+        http::Query<beast::http::string_body, beast::http::string_body> query(std::move(request), "80");
+        
         // Send request and waits for response.
-        http::Response<beast::http::string_body> response =
-        http::write<beast::http::string_body, beast::http::string_body>(std::move(request), "80");
+        http::Response<beast::http::string_body> response = query.writeQuery();
         
         REQUIRE(!response.error);
         CHECK(response.result() == beast::http::status::ok);
@@ -78,8 +79,9 @@ TEST_CASE("Network - Http", "[Network, Http]")
             CHECK(response.result() == beast::http::status::ok);
         };
         
-        auto future = http::writeAsync(std::move(request), "80", callback);
-        future.get();
+        http::Query<beast::http::string_body, beast::http::string_body> query(std::move(request), "80");
+        
+        query.writeQueryAsync(std::move(callback));
     }
 }
 
