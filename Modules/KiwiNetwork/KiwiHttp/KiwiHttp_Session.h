@@ -116,7 +116,7 @@ namespace kiwi { namespace network { namespace http {
         void setPayload(Payload && payload);
         void setBody(std::string const& content);
         
-        bool isPending();
+        bool executed();
         void cancel();
         
         Response Get();

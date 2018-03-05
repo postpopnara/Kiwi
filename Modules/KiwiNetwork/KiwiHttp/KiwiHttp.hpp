@@ -21,8 +21,6 @@
 
 #pragma once
 
-#include <KiwiNetwork/KiwiNetwork_Service.h>
-
 namespace kiwi { namespace network { namespace http {
     
     // ================================================================================ //
@@ -35,11 +33,14 @@ namespace kiwi { namespace network { namespace http {
     : m_request(std::move(request))
     , m_response()
     , m_port(port)
-    , m_socket(Service::use())
+    , m_io_service()
+    , m_socket(m_io_service)
     , m_timer(m_socket.get_io_service())
     , m_resolver(m_socket.get_io_service())
     , m_buffer()
-    , m_cancel_requested()
+    , m_thread()
+    , m_executed(false)
+    , m_callback()
     {
     }
     
@@ -60,13 +61,13 @@ namespace kiwi { namespace network { namespace http {
             m_thread.join();
         }
         
-        if (m_response.result() == beast::http::status::unknown && !m_response.error)
+        if (!executed())
         {
             init(timeout);
             
-            while(m_response.result() == beast::http::status::unknown && !m_response.error)
+            while(!executed())
             {
-                m_socket.get_io_service().run_one();
+                m_socket.get_io_service().poll_one();
             }
         }
         
@@ -76,38 +77,43 @@ namespace kiwi { namespace network { namespace http {
     template<class ReqType, class ResType>
     void Query<ReqType, ResType>::writeQueryAsync(std::function<void(Response<ResType> const& res)> && callback, Timeout timeout)
     {
-        if (!isPending())
+        if (!executed() && !m_thread.joinable())
         {
-            if (m_response.result() == beast::http::status::unknown && !m_response.error)
+            init(timeout);
+            
+            m_callback = std::move(callback);
+            
+            m_thread = std::thread([this, func = std::move(callback)]()
             {
-                init(timeout);
-                
-                m_thread = std::thread([this, func = std::move(callback)]()
+                while(!executed())
                 {
-                    while(m_response.result() == beast::http::status::unknown && !m_response.error && !m_cancel_requested.load())
-                    {
-                        m_socket.get_io_service().run_one();
-                    }
-                    
-                    if (m_response.result() == beast::http::status::unknown || m_response.error)
-                    {
-                        func(m_response);
-                    }
-                });
-            }
+                    m_socket.get_io_service().poll_one();
+                }
+            });
         }
     }
     
     template<class ReqType, class ResType>
     void Query<ReqType, ResType>::cancel()
     {
-        m_cancel_requested.store(true);
+        if (m_timer.cancel() != 0)
+        {
+            if (m_thread.joinable())
+            {
+                m_thread.join();
+            }
+        }
+        
+        if (!m_executed)
+        {
+            shutdown(boost::asio::error::basic_errors::timed_out);
+        }
     }
     
     template<class ReqType, class ResType>
-    bool Query<ReqType, ResType>::isPending()
+    bool Query<ReqType, ResType>::executed()
     {
-        return m_thread.joinable();
+        return m_executed.load();
     }
     
     template<class ReqType, class ResType>
@@ -151,7 +157,7 @@ namespace kiwi { namespace network { namespace http {
     void Query<ReqType, ResType>::connect(tcp::resolver::iterator iterator)
     {
         boost::asio::async_connect(m_socket, iterator, [this](Error const& error,
-                                                              tcp::resolver::iterator i) {
+                                                              tcp::resolver::iterator i){
             if (error)
             {
                 shutdown(error);
@@ -198,6 +204,13 @@ namespace kiwi { namespace network { namespace http {
         
         boost::system::error_code ec;
         m_socket.shutdown(tcp::socket::shutdown_both, ec);
+        
+        if (m_callback)
+        {
+            m_callback(m_response);
+        }
+        
+        m_executed.store(true);
     }
     
 }}} // namespace kiwi::network::http

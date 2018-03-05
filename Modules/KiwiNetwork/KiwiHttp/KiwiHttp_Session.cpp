@@ -142,9 +142,9 @@ namespace kiwi { namespace network { namespace http {
         m_body.content = content;
     }
     
-    bool Session::isPending()
+    bool Session::executed()
     {
-        return m_query && m_query->isPending();
+        return m_query && m_query->executed();
     }
     
     void Session::cancel()
