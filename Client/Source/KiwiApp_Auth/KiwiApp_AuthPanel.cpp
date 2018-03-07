@@ -19,10 +19,10 @@
  ==============================================================================
  */
 
-#include "KiwiApp_AuthPanel.h"
+#include <KiwiApp_Auth/KiwiApp_AuthPanel.h>
 
-#include "../KiwiApp.h"
-#include "../KiwiApp_General/KiwiApp_CommandIDs.h"
+#include <KiwiApp.h>
+#include <KiwiApp_General/KiwiApp_CommandIDs.h>
 
 namespace kiwi
 {
@@ -32,6 +32,7 @@ namespace kiwi
     
     LoginForm::LoginForm()
     : FormComponent("Login", "login...")
+    , m_requests(KiwiApp::useApi())
     {
         setState(State::Login);
     }
@@ -107,7 +108,7 @@ namespace kiwi
     {
         auto success_callback = [this](std::string const& message)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this]() {
+            KiwiApp::useScheduler().schedule([this]() {
                 setState(State::Login);
                 showAlert("Password reset. Try login again.", AlertBox::Type::Info);
             });
@@ -117,7 +118,7 @@ namespace kiwi
         {
             std::string error_message = error.getMessage();
             
-            KiwiApp::useInstance().useScheduler().schedule([this, error_message]() {
+            KiwiApp::useScheduler().schedule([this, error_message]() {
                 showAlert(error_message, AlertBox::Type::Error);
             });
         };
@@ -125,14 +126,14 @@ namespace kiwi
         const std::string token = getFieldValue("token").toString().toStdString();
         const std::string newpass = getFieldValue("newpass").toString().toStdString();
         
-        KiwiApp::useApi().resetPassword(token, newpass, success_callback, error_callback);
+        m_requests.pushRequest(KiwiApp::useApi().resetPassword(token, newpass, success_callback, error_callback));
     }
     
     void LoginForm::performPassRequest()
     {
         auto success_callback = [this](std::string const& message)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this]() {
+            KiwiApp::useScheduler().schedule([this]() {
                 setState(State::Reset);
                 showAlert("Reset token sent. Check your email.", AlertBox::Type::Info);
             });
@@ -142,14 +143,14 @@ namespace kiwi
         {
             std::string error_message = error.getMessage();
             
-            KiwiApp::useInstance().useScheduler().schedule([this, error_message]() {
+            KiwiApp::useScheduler().schedule([this, error_message]() {
                 showAlert(error_message, AlertBox::Type::Error);
             });
         };
         
         const std::string email = getFieldValue("email").toString().toStdString();
         
-        KiwiApp::useApi().requestPasswordToken(email, success_callback, error_callback);
+        m_requests.pushRequest(KiwiApp::useApi().requestPasswordToken(email, success_callback, error_callback));
     }
     
     void LoginForm::performLogin()
@@ -172,13 +173,15 @@ namespace kiwi
         
         showOverlay();
         
-        auto success_callback = [this, remember_me]()
+        auto success_callback = [this, remember_me](Api::AuthUser auth_user)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this, remember_me]() {
+            KiwiApp::useScheduler().schedule([this, remember_me, auth_user]() {
+                
+                KiwiApp::use().setAuthUser(auth_user);
                 
                 showSuccessOverlay("Login success !");
                 
-                KiwiApp::useInstance().useScheduler().schedule([this, remember_me]() {
+                KiwiApp::useScheduler().schedule([this, remember_me]() {
                     
                     getAppSettings().network().setRememberUserFlag(remember_me);
                     dismiss();
@@ -190,7 +193,7 @@ namespace kiwi
         
         auto error_callback = [this](Api::Error error)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this, message = error.getMessage()]() {
+            KiwiApp::useScheduler().schedule([this, message = error.getMessage()]() {
                 
                 hideOverlay();
                 showAlert(message, AlertBox::Type::Error);
@@ -198,10 +201,10 @@ namespace kiwi
             }, std::chrono::milliseconds(500));
         };
         
-        KiwiApp::login(username.toStdString(),
-                       password.toStdString(),
-                       std::move(success_callback),
-                       std::move(error_callback));
+        m_requests.pushRequest(KiwiApp::useApi().login(username.toStdString(),
+                                                       password.toStdString(),
+                                                       std::move(success_callback),
+                                                       std::move(error_callback)));
     }
     
     void LoginForm::onUserSubmit()
@@ -254,6 +257,7 @@ namespace kiwi
     
     SignUpForm::SignUpForm()
     : FormComponent("Register", "register...")
+    , m_requests(KiwiApp::useApi())
     {
         addField<Field::KiwiLogo>();
         addField<Field::SingleLineText>("username", "", "Username");
@@ -299,11 +303,11 @@ namespace kiwi
         
         auto success_callback = [this](std::string message)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this, message]() {
+            KiwiApp::useScheduler().schedule([this, message]() {
                 
                 showSuccessOverlay(message);
                 
-                KiwiApp::useInstance().useScheduler().schedule([this]() {
+                KiwiApp::useScheduler().schedule([this]() {
                     
                     if(AuthPanel* auth_panel = findParentComponentOfClass<AuthPanel>())
                     {
@@ -318,7 +322,7 @@ namespace kiwi
         
         auto error_callback = [this](Api::Error error)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this, message = error.getMessage()](){
+            KiwiApp::useScheduler().schedule([this, message = error.getMessage()](){
                 
                 hideOverlay();
                 showAlert(message, AlertBox::Type::Error);
@@ -326,11 +330,11 @@ namespace kiwi
             }, std::chrono::milliseconds(500));
         };
         
-        KiwiApp::signup(username.toStdString(),
-                        email.toStdString(),
-                        password.toStdString(),
-                        std::move(success_callback),
-                        std::move(error_callback));
+        m_requests.pushRequest(KiwiApp::useApi().signup(username.toStdString(),
+                                                        email.toStdString(),
+                                                        password.toStdString(),
+                                                        std::move(success_callback),
+                                                        std::move(error_callback)));
     }
     
     // ================================================================================ //

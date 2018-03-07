@@ -44,7 +44,8 @@ namespace kiwi
     // ================================================================================ //
     
     Api::Api(Api::Controller& controller) :
-    m_controller(controller)
+    m_controller(controller),
+    m_requests()
     {
         ;
     }
@@ -54,24 +55,42 @@ namespace kiwi
         
     }
     
-    void Api::cancelPendingRequest()
-    {
-        for(auto & session : m_pending_requests)
-        {
-            session->cancel();
-        }
-        
-        m_pending_requests.clear();
-    }
-    
     // ================================================================================ //
     //                                   API REQUESTS                                   //
     // ================================================================================ //
     
-    void Api::login(std::string const& username_or_email,
-                    std::string const& password,
-                    CallbackFn<AuthUser> success_cb,
-                    ErrorCallback error_cb)
+    void Api::cancelRequest(uint64_t request_id)
+    {
+        auto request = std::find_if(m_requests.begin(),
+                                    m_requests.end(),
+                                    [request_id](std::unique_ptr<Session> const& session)
+        {
+            return session->getId() == request_id;
+        });
+        
+        if (request != m_requests.end())
+        {
+            (*request)->cancel();
+            m_requests.erase(request);
+        }
+    }
+    
+    bool Api::isPending(uint64_t request_id)
+    {
+        auto request = std::find_if(m_requests.begin(),
+                                    m_requests.end(),
+                                    [request_id](std::unique_ptr<Session> const& session)
+        {
+            return session->getId() == request_id;
+        });
+        
+        return request != m_requests.end() && !(*request)->executed();
+    }
+    
+    uint64_t Api::login(std::string const& username_or_email,
+                        std::string const& password,
+                        CallbackFn<AuthUser> success_cb,
+                        ErrorCallback error_cb)
     {
         assert(!username_or_email.empty());
         assert(!password.empty());
@@ -113,14 +132,15 @@ namespace kiwi
         };
         
         session->PostAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::signup(std::string const& username,
-                     std::string const& email,
-                     std::string const& password,
-                     CallbackFn<std::string> success_cb,
-                     ErrorCallback error_cb)
+    uint64_t Api::signup(std::string const& username,
+                         std::string const& email,
+                         std::string const& password,
+                         CallbackFn<std::string> success_cb,
+                         ErrorCallback error_cb)
     {
         assert(!username.empty());
         assert(!email.empty());
@@ -160,12 +180,13 @@ namespace kiwi
         };
         
         session->PostAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::getUsers(std::unordered_set<uint64_t> const& user_ids,
-                       CallbackFn<Api::Users> success_cb,
-                       ErrorCallback error_cb)
+    uint64_t Api::getUsers(std::unordered_set<uint64_t> const& user_ids,
+                           CallbackFn<Api::Users> success_cb,
+                           ErrorCallback error_cb)
     {
         auto cb =
         [success = std::move(success_cb), fail = std::move(error_cb)]
@@ -198,10 +219,11 @@ namespace kiwi
         session->setParameters({{"ids", j_users.dump()}});
         
         session->GetAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::getDocuments(std::function<void(Response, Api::Documents)> callback)
+    uint64_t Api::getDocuments(std::function<void(Response, Api::Documents)> callback)
     {
         auto cb = [callback = std::move(callback)](Response res)
         {
@@ -226,11 +248,12 @@ namespace kiwi
         auto session = makeSession(Endpoint::documents);
         
         session->GetAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::createDocument(std::string const& document_name,
-                             std::function<void(Response, Api::Document)> callback)
+    uint64_t Api::createDocument(std::string const& document_name,
+                                 std::function<void(Response, Api::Document)> callback)
     {
         auto cb = [callback = std::move(callback)](Response res)
         {
@@ -262,13 +285,14 @@ namespace kiwi
         }
         
         session->PostAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::uploadDocument(std::string const& name,
-                             std::string const& data,
-                             std::string const& kiwi_version,
-                             std::function<void(Response, Api::Document)> callback)
+    uint64_t Api::uploadDocument(std::string const& name,
+                                 std::string const& data,
+                                 std::string const& kiwi_version,
+                                 std::function<void(Response, Api::Document)> callback)
     {
         auto cb = [callback = std::move(callback)](Response res)
         {
@@ -295,19 +319,21 @@ namespace kiwi
         session->setBody(data);
         
         session->PostAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::duplicateDocument(std::string const& document_id, Callback callback)
+    uint64_t Api::duplicateDocument(std::string const& document_id, Callback callback)
     {
         auto session = makeSession(Endpoint::document(document_id) + "/clone");
         
         session->PostAsync(std::move(callback));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::renameDocument(std::string document_id, std::string const& new_name,
-                             Callback callback)
+    uint64_t Api::renameDocument(std::string document_id, std::string const& new_name,
+                                 Callback callback)
     {
         assert(!new_name.empty() && "name should not be empty!");
         
@@ -317,10 +343,11 @@ namespace kiwi
         });
         
         session->PutAsync(std::move(callback));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::untrashDocument(std::string document_id, Callback callback)
+    uint64_t Api::untrashDocument(std::string document_id, Callback callback)
     {
         auto session = makeSession(Endpoint::document(document_id));
         
@@ -329,10 +356,11 @@ namespace kiwi
         });
         
         session->PutAsync(std::move(callback));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::trashDocument(std::string document_id, Callback callback)
+    uint64_t Api::trashDocument(std::string document_id, Callback callback)
     {
         auto session = makeSession(Endpoint::document(document_id));
         
@@ -341,12 +369,13 @@ namespace kiwi
         });
         
         session->PutAsync(std::move(callback));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::getOpenToken(std::string document_id,
-                           CallbackFn<std::string const&> success_cb,
-                           ErrorCallback error_cb)
+    uint64_t Api::getOpenToken(std::string document_id,
+                               CallbackFn<std::string const&> success_cb,
+                               ErrorCallback error_cb)
     {
         auto session = makeSession(Endpoint::document(document_id) + "/opentoken");
         
@@ -367,20 +396,21 @@ namespace kiwi
         };
         
         session->GetAsync(std::move(callback));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::downloadDocument(std::string document_id, Callback callback)
+    uint64_t Api::downloadDocument(std::string document_id, Callback callback)
     {
         auto session = makeSession(Endpoint::document(document_id) + "/download");
         
         session->setParameters({{"alt", "download"}});
-        
         session->GetAsync(std::move(callback));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::getRelease(CallbackFn<std::string const&> success_cb, ErrorCallback error_cb)
+    uint64_t Api::getRelease(CallbackFn<std::string const&> success_cb, ErrorCallback error_cb)
     {
         auto session = makeSession(Endpoint::release);
         
@@ -406,10 +436,13 @@ namespace kiwi
         };
         
         session->GetAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::requestPasswordToken(std::string const& user_mail, CallbackFn<std::string const&> success_cb, ErrorCallback error_cb)
+    uint64_t Api::requestPasswordToken(std::string const& user_mail,
+                                       CallbackFn<std::string const&> success_cb,
+                                       ErrorCallback error_cb)
     {
         auto session = makeSession(Endpoint::users + "/passtoken");
         
@@ -439,10 +472,11 @@ namespace kiwi
         };
         
         session->PostAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
-    void Api::resetPassword(std::string const& token,
+    uint64_t Api::resetPassword(std::string const& token,
                             std::string const& newpass,
                             CallbackFn<std::string const&> success_cb,
                             ErrorCallback error_cb)
@@ -476,7 +510,8 @@ namespace kiwi
         };
         
         session->PostAsync(std::move(cb));
-        storeSession(std::move(session));
+        
+        return storeSession(std::move(session));
     }
     
     std::string Api::convertDate(std::string const& date)
@@ -513,13 +548,13 @@ namespace kiwi
         return std::move(session);
     }
     
-    void Api::storeSession(std::unique_ptr<Session> session)
+    uint64_t Api::storeSession(std::unique_ptr<Session> session)
     {
-        for(auto it = m_pending_requests.begin(); it != m_pending_requests.end();)
+        for(auto it = m_requests.begin(); it != m_requests.end();)
         {
-            if (!(*it)->executed())
+            if ((*it)->executed())
             {
-                it = m_pending_requests.erase(it);
+                it = m_requests.erase(it);
             }
             else
             {
@@ -527,7 +562,11 @@ namespace kiwi
             }
         }
         
-        m_pending_requests.emplace_back(std::move(session));
+        uint64_t session_id = session->getId();
+        
+        m_requests.emplace(std::move(session));
+        
+        return session_id;
     }
     
     // ================================================================================ //
@@ -796,5 +835,40 @@ namespace kiwi
     void Api::Controller::clearToken()
     {
         m_auth_user.m_token.clear();
+    }
+    
+    // ================================================================================ //
+    //                                   REQUEST BUNDLE                                 //
+    // ================================================================================ //
+    
+    RequestBundle::RequestBundle(Api & api):
+    m_api(api),
+    m_requests()
+    {
+    }
+    
+    RequestBundle::~RequestBundle()
+    {
+        for (uint64_t request_id : m_requests)
+        {
+            m_api.cancelRequest(request_id);
+        }
+    }
+    
+    void RequestBundle::pushRequest(uint64_t request_id)
+    {
+        for(auto it = m_requests.begin(); it != m_requests.end();)
+        {
+            if (!m_api.isPending(*it))
+            {
+                it = m_requests.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+        
+        m_requests.insert(request_id);
     }
 }

@@ -83,6 +83,9 @@ namespace kiwi
     
     DocumentBrowser::Drive::Drive(std::string const& name) :
     m_name(name),
+    m_documents(),
+    m_listeners(),
+    m_requests(KiwiApp::useApi()),
     m_sort([](DocumentSession const& l_hs, DocumentSession const& r_hs)
     {
         return l_hs.getName() < r_hs.getName();
@@ -129,10 +132,10 @@ namespace kiwi
     
     void DocumentBrowser::Drive::uploadDocument(std::string const& name, std::string const& data)
     {
-        KiwiApp::useApi().uploadDocument(name,
-                                         data,
-                                         KiwiApp::use().getApplicationVersion().toStdString(),
-                                         [this](Api::Response res, Api::Document document)
+        uint64_t request_id = KiwiApp::useApi().uploadDocument(name,
+                                                               data,
+                                                               KiwiApp::use().getApplicationVersion().toStdString(),
+                                                               [this](Api::Response res, Api::Document document)
         {
             if (res.result() == beast::http::status::forbidden)
             {
@@ -153,12 +156,14 @@ namespace kiwi
                 });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     void DocumentBrowser::Drive::createNewDocument()
     {
-        KiwiApp::useApi().createDocument("", [this](Api::Response res, Api::Document document) {
-            
+        uint64_t request_id = KiwiApp::useApi().createDocument("", [this](Api::Response res, Api::Document document)
+        {
             if (res.result() == beast::http::status::forbidden)
             {
                 DocumentBrowser::handleDeniedRequest();
@@ -178,6 +183,8 @@ namespace kiwi
                 });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     DocumentBrowser::Drive::DocumentSessions const& DocumentBrowser::Drive::getDocuments() const
@@ -271,26 +278,29 @@ namespace kiwi
     
     void DocumentBrowser::Drive::refresh_internal()
     {
-        KiwiApp::useApi().getDocuments([this](Api::Response res, Api::Documents docs)
+        uint64_t request_id = KiwiApp::useApi().getDocuments([this](Api::Response res, Api::Documents docs)
         {
             if (res.result() == beast::http::status::ok
                 && !res.error)
             {
-                KiwiApp::useInstance().useScheduler().schedule([this, docs]()
+                KiwiApp::useScheduler().schedule([this, docs]()
                 {
                     updateDocumentList(docs);
                 });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     void DocumentBrowser::Drive::refresh()
     {
-        KiwiApp::useApi().getDocuments([this](Api::Response res, Api::Documents docs) {
+        uint64_t request_id = KiwiApp::useApi().getDocuments([this](Api::Response res, Api::Documents docs)
+        {
             
             if (res.result() == beast::http::status::forbidden)
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                 });
@@ -301,11 +311,13 @@ namespace kiwi
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule([this, docs]() {
+                KiwiApp::useScheduler().schedule([this, docs]() {
                     updateDocumentList(docs);
                 });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     // ================================================================================ //
@@ -316,9 +328,9 @@ namespace kiwi
                                                              Api::Document document) :
     m_drive(parent),
     m_document(std::move(document)),
-    m_open_token("")
+    m_open_token(""),
+    m_requests(KiwiApp::useApi())
     {
-        
     }
     
     DocumentBrowser::Drive::DocumentSession::~DocumentSession()
@@ -378,11 +390,11 @@ namespace kiwi
     
     void DocumentBrowser::Drive::DocumentSession::untrash()
     {
-        KiwiApp::useApi().untrashDocument(m_document._id, [this](Api::Response res)
+        uint64_t request_id = KiwiApp::useApi().untrashDocument(m_document._id, [this](Api::Response res)
         {
             if (res.result() == beast::http::status::forbidden)
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                 });
@@ -393,21 +405,24 @@ namespace kiwi
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule([this]()
+                KiwiApp::useScheduler().schedule([this]()
                                                                {
                                                                    m_drive.refresh();
                                                                });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     void DocumentBrowser::Drive::DocumentSession::trash()
     {
-        KiwiApp::useApi().trashDocument(m_document._id, [this](Api::Response res) {
+        uint64_t reques_id = KiwiApp::useApi().trashDocument(m_document._id, [this](Api::Response res)
+        {
             
             if (res.result() == beast::http::status::forbidden)
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                     
@@ -419,21 +434,23 @@ namespace kiwi
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule([this]()
+                KiwiApp::useScheduler().schedule([this]()
                 {
                     m_drive.refresh();
                 });
             }
         });
+        
+        m_requests.pushRequest(reques_id);
     }
     
     void DocumentBrowser::Drive::DocumentSession::duplicate()
     {
-        KiwiApp::useApi().duplicateDocument(m_document._id, [this](Api::Response res) {
+        uint64_t request_id = KiwiApp::useApi().duplicateDocument(m_document._id, [this](Api::Response res) {
             
             if (res.result() == beast::http::status::forbidden)
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                 });
@@ -444,12 +461,14 @@ namespace kiwi
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule([this]()
+                KiwiApp::useScheduler().schedule([this]()
                 {
                     m_drive.refresh();
                 });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     void DocumentBrowser::Drive::DocumentSession::rename(std::string const& new_name)
@@ -459,11 +478,11 @@ namespace kiwi
             return;
         }
         
-        KiwiApp::useApi().renameDocument(m_document._id, new_name, [this](Api::Response res) {
+        uint64_t request_id = KiwiApp::useApi().renameDocument(m_document._id, new_name, [this](Api::Response res) {
             
             if (res.result() == beast::http::status::forbidden)
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                 });
@@ -474,23 +493,25 @@ namespace kiwi
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule([this]()
+                KiwiApp::useScheduler().schedule([this]()
                 {
                     m_drive.refresh();
                 });
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     void DocumentBrowser::Drive::DocumentSession::download(std::function<void(std::string const&)> callback)
     {
-        KiwiApp::useApi().downloadDocument(m_document._id,
+        uint64_t request_id = KiwiApp::useApi().downloadDocument(m_document._id,
                                            [this, cb = std::move(callback)](Api::Response res)
         {
             
             if (res.result() == beast::http::status::forbidden)
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                     
@@ -502,9 +523,11 @@ namespace kiwi
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule(std::bind(cb, res.body));
+                KiwiApp::useScheduler().schedule(std::bind(cb, res.body));
             }
         });
+        
+        m_requests.pushRequest(request_id);
     }
     
     bool DocumentBrowser::Drive::DocumentSession::operator==(DocumentSession const& other_doc) const
@@ -523,7 +546,7 @@ namespace kiwi
         {
             m_open_token = token;
             
-            KiwiApp::useInstance().useScheduler().schedule([this]()
+            KiwiApp::useScheduler().schedule([this]()
             {
                 KiwiApp::useInstance().openRemotePatcher(*this);
                 m_drive.refresh();
@@ -534,20 +557,20 @@ namespace kiwi
         {
             if (er.getStatusCode() == static_cast<unsigned>(beast::http::status::forbidden))
             {
-                KiwiApp::useInstance().useScheduler().schedule([]()
+                KiwiApp::useScheduler().schedule([]()
                 {
                     DocumentBrowser::handleDeniedRequest();
                 });
             }
             else
             {
-                KiwiApp::useInstance().useScheduler().schedule([er]()
+                KiwiApp::useScheduler().schedule([er]()
                 {
                     KiwiApp::error(er.getMessage());
                 });
             }
         };
         
-        KiwiApp::useApi().getOpenToken(m_document._id, success, error);
+        m_requests.pushRequest(KiwiApp::useApi().getOpenToken(m_document._id, success, error));
     }
 }

@@ -21,7 +21,9 @@
 
 #pragma once
 
-#include "../KiwiApp_Components/KiwiApp_FormComponent.h"
+#include <KiwiApp_Components/KiwiApp_FormComponent.h>
+
+#include <KiwiApp_Network/KiwiApp_Api.h>
 
 namespace kiwi
 {
@@ -71,7 +73,8 @@ namespace kiwi
         
     private: // members
         
-        State m_state;
+        State           m_state;
+        RequestBundle   m_requests;
         
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LoginForm)
     };
@@ -94,6 +97,10 @@ namespace kiwi
     private: // methods
         
         void onUserSubmit() override;
+        
+    private: // members
+        
+        RequestBundle   m_requests;
         
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SignUpForm)
     };

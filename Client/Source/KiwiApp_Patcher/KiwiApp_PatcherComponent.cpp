@@ -165,6 +165,7 @@ namespace kiwi
     , m_users_img(juce::ImageCache::getFromMemory(binary_data::images::users_png,
                                                   binary_data::images::users_png_size))
     , m_flash_alpha(0.f)
+    , m_requests(KiwiApp::useApi())
     {
         updateUsers();
         m_patcher_manager.addListener(*this);
@@ -183,7 +184,7 @@ namespace kiwi
         
         auto success = [this](Api::Users users)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this, users]()
+            KiwiApp::useScheduler().schedule([this, users]()
             {
                 m_users.clear();
                 
@@ -198,14 +199,14 @@ namespace kiwi
         
         auto fail = [this](Api::Error error)
         {
-            KiwiApp::useInstance().useScheduler().schedule([this, error]()
+            KiwiApp::useScheduler().schedule([this, error]()
             {
                 m_users.clear();
                 
             });
         };
         
-        KiwiApp::useApi().getUsers(m_patcher_manager.getConnectedUsers(), success, fail);
+        m_requests.pushRequest(KiwiApp::useApi().getUsers(m_patcher_manager.getConnectedUsers(), success, fail));
     }
     
     void PatcherToolbar::UsersItemComponent::connectedUserChanged(PatcherManager& manager)

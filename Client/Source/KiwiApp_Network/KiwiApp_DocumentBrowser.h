@@ -140,6 +140,7 @@ namespace kiwi
         std::string                 m_name;
         DocumentSessions            m_documents;
         tool::Listeners<Listener>   m_listeners;
+        RequestBundle               m_requests;
         Comp                        m_sort;
         
         friend class DocumentBrowser;
@@ -244,6 +245,7 @@ namespace kiwi
         DocumentBrowser::Drive&             m_drive;
         Api::Document                       m_document;
         std::string                         m_open_token;
+        RequestBundle                       m_requests;
         
         friend class DocumentBrowser::Drive;
     };

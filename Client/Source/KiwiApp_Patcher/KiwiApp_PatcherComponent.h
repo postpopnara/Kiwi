@@ -137,6 +137,7 @@ namespace kiwi
         size_t                      m_user_nb;
         const juce::Image           m_users_img;
         float                       m_flash_alpha = 0.f;
+        RequestBundle               m_requests;
     };
     
     // ================================================================================ //
