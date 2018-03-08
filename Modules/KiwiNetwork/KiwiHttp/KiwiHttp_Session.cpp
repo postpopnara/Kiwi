@@ -261,7 +261,7 @@ namespace kiwi { namespace network { namespace http {
         
         initQuery();
         
-        return m_query->writeQuery();
+        return m_query->writeQuery(m_timeout);
     }
     
     void Session::makeResponse(beast::http::verb verb, Session::Callback && callback)
@@ -270,7 +270,7 @@ namespace kiwi { namespace network { namespace http {
         
         initQuery();
         
-        m_query->writeQueryAsync(callback);
+        m_query->writeQueryAsync(callback, m_timeout);
     }
     
 }}} // namespace kiwi::network::http

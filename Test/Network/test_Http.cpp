@@ -200,4 +200,32 @@ TEST_CASE("Network - Http Session", "[Network, Http]")
             CHECK(response.result() == beast::http::status::ok);
         });
     }
+    
+    SECTION("Session Get request with timeout")
+    {
+        http::Session session;
+        session.setHost("example.com");
+        session.setTarget("/get");
+        session.setPort("81");
+        session.setTimeout(http::Timeout(100));
+        
+        http::Session::Response response = session.Get();
+        
+        CHECK(response.error);
+        CHECK(response.error == boost::asio::error::basic_errors::timed_out);
+    }
+    
+    SECTION("Session GetAsync with timeout")
+    {
+        http::Session session;
+        session.setHost("example.com");
+        session.setTarget("/get");
+        session.setPort("81");
+        session.setTimeout(http::Timeout(100));
+        
+        session.GetAsync([](http::Session::Response response) {
+            CHECK(response.error);
+            CHECK(response.error == boost::asio::error::basic_errors::timed_out);
+        });
+    }
 }
