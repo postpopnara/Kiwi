@@ -42,10 +42,13 @@ namespace kiwi { namespace engine {
         ~FaustTilde();
         
         void receive(size_t index, std::vector<tool::Atom> const& args) final {}
-        
+        void perform(dsp::Buffer const& input, dsp::Buffer& output) noexcept;
         void prepare(dsp::Processor::PrepareInfo const& infos) final;
     private:
-        external::Object* m_object = nullptr;
+        bool                m_error = false;
+        external::Object*   m_object = nullptr;
+        external::buffer_t  m_inputs;
+        external::buffer_t  m_outputs;
     };
 
 }}
