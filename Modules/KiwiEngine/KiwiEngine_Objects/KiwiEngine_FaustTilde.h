@@ -22,6 +22,7 @@
 #pragma once
 
 #include <KiwiEngine/KiwiEngine_Object.h>
+#include "../../KiwiExternal/Kiwi_Loader.hpp"
 
 namespace kiwi { namespace engine {
     
@@ -38,10 +39,13 @@ namespace kiwi { namespace engine {
         static std::unique_ptr<Object> create(model::Object const& model, Patcher & patcher);
         
         FaustTilde(model::Object const& model, Patcher& patcher);
+        ~FaustTilde();
         
         void receive(size_t index, std::vector<tool::Atom> const& args) final {}
         
         void prepare(dsp::Processor::PrepareInfo const& infos) final;
+    private:
+        external::Object* m_object = nullptr;
     };
 
 }}

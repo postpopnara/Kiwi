@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <dlfcn.h>
 
+#include "../../KiwiExternal/Kiwi_Loader.hpp"
+
 namespace kiwi { namespace engine {
     
     // ================================================================================ //
@@ -44,24 +46,45 @@ namespace kiwi { namespace engine {
     AudioObject(model, patcher)
     {
         auto const& args = model.getArguments();
-        std::string const name = args[2].getString() + ".kiwix";
-        void* lib_handle = dlopen(name.c_str(), RTLD_LOCAL|RTLD_LAZY);
-        if (!lib_handle)
+        try
         {
-            post(name + " : Unable to load library");
+            m_object = external::Loader::create("", args[2].getString());
         }
-        else
+        catch (external::kerror_t& e)
         {
-            post(name + " : loaded");
+            error(std::string("faust~: ") + e.what());
         }
-        /*
-        // Print data entered and call libRatings.A:addRating().
-        void (*addRating)(char*) = dlsym(lib_handle, "addRating");
-        if (!addRating) {       // addRating is guaranteed to exist in libRatings.A.dylib
-            printf("[%s] Unable to get symbol: %s\n", __FILE__, dlerror());
-            exit(EXIT_FAILURE);
+        if(m_object)
+        {
+            const auto ninlets = m_object->getNumberOfInputs() > 0 ? m_object->getNumberOfInputs() : 1;
+            const auto noutlets = m_object->getNumberOfOutputs() + 1;
+            
+            if(ninlets != getNumberOfInputs())
+            {
+                error(std::string("faust~: " + args[2].getString() + " wrong number of inputs, " +
+                                  std::to_string(m_object->getNumberOfInputs()) + " inputs expected"));
+            }
+            if(noutlets != getNumberOfOutputs())
+            {
+                error(std::string("faust~: " + args[2].getString() + " wrong number of outputs, " +
+                                  std::to_string(m_object->getNumberOfOutputs()) + " outputs expected"));
+            }
         }
-         */
+    }
+    
+    FaustTilde::~FaustTilde()
+    {
+        if(m_object)
+        {
+            try
+            {
+                external::Loader::dispose(m_object);
+            }
+            catch (external::kerror_t& e)
+            {
+                error(std::string("faust~: ") + e.what());
+            }
+        }
     }
     
     void FaustTilde::prepare(PrepareInfo const& infos)

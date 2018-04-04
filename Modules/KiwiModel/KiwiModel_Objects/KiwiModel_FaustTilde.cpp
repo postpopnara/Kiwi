@@ -69,7 +69,7 @@ namespace kiwi { namespace model {
             throw Error("faust~ 3rd argument must be the name of the file containing the FAUST code");
         }
         pushInlet({PinType::IType::Control, PinType::IType::Signal});
-        for(int i = 0; i < args[0].getInt(); ++i)
+        for(int i = 1; i < args[0].getInt(); ++i)
         {
             pushInlet({PinType::IType::Signal});
         }
