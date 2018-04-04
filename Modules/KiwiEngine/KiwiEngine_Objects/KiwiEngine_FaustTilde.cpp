@@ -21,6 +21,8 @@
 
 #include <KiwiEngine/KiwiEngine_Objects/KiwiEngine_FaustTilde.h>
 #include <KiwiEngine/KiwiEngine_Factory.h>
+#include <stdlib.h>
+#include <dlfcn.h>
 
 namespace kiwi { namespace engine {
     
@@ -41,6 +43,25 @@ namespace kiwi { namespace engine {
     FaustTilde::FaustTilde(model::Object const& model, Patcher& patcher):
     AudioObject(model, patcher)
     {
+        auto const& args = model.getArguments();
+        std::string const name = args[2].getString() + ".kiwix";
+        void* lib_handle = dlopen(name.c_str(), RTLD_LOCAL|RTLD_LAZY);
+        if (!lib_handle)
+        {
+            post(name + " : Unable to load library");
+        }
+        else
+        {
+            post(name + " : loaded");
+        }
+        /*
+        // Print data entered and call libRatings.A:addRating().
+        void (*addRating)(char*) = dlsym(lib_handle, "addRating");
+        if (!addRating) {       // addRating is guaranteed to exist in libRatings.A.dylib
+            printf("[%s] Unable to get symbol: %s\n", __FILE__, dlerror());
+            exit(EXIT_FAILURE);
+        }
+         */
     }
     
     void FaustTilde::prepare(PrepareInfo const& infos)
