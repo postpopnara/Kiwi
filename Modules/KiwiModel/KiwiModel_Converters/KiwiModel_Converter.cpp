@@ -40,7 +40,13 @@ namespace kiwi { namespace model {
             return member.first == "patcher_name";
         });
         
-        backend.version = "v2";
+        backend.complete_conversion("v2");
+    }
+    
+    void Converter::convert_v2_v3(flip::BackEndIR & backend)
+    {
+        // Only adding new objects.
+        backend.complete_conversion("v3");
     }
     
     bool Converter::process(flip::BackEndIR & backend)
@@ -58,7 +64,12 @@ namespace kiwi { namespace model {
                 convert_v1_v2(backend);
             }
             
-            if (backend.version.compare("v2") == 0 || backend.version.compare("v3") == 0)
+            if (backend.version.compare("v2") == 0)
+            {
+                convert_v2_v3(backend);
+            }
+            
+            if (backend.version.compare("v3") == 0)
             {
                 success = true;
             }

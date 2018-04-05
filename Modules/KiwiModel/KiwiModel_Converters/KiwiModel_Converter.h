@@ -44,6 +44,9 @@ namespace kiwi { namespace model {
         //! @brief Converts a v1 data model to a v2 data model.
         static void convert_v1_v2(flip::BackEndIR & backend);
         
+        //! @brief Converts a v2 data model to a v3 data model.
+        static void convert_v2_v3(flip::BackEndIR & backend);
+        
         //! @brief Rollbacks depecrated revisions.
         static void process_rollback(flip::BackEndIR & backend);
     };
