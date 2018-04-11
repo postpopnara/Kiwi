@@ -23,6 +23,7 @@
 
 #include <KiwiEngine/KiwiEngine_Objects/KiwiEngine_MeterTilde.h>
 #include <KiwiEngine/KiwiEngine_Factory.h>
+#include <KiwiEngine/KiwiEngine_Patcher.h>
 
 namespace kiwi { namespace engine {
     

@@ -20,6 +20,7 @@
  */
 
 #include <KiwiEngine/KiwiEngine_Objects/KiwiEngine_AudioInterface.h>
+#include <KiwiEngine/KiwiEngine_Patcher.h>
 
 namespace kiwi { namespace engine {
     

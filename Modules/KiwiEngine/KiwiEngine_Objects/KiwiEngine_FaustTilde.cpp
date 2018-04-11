@@ -58,8 +58,8 @@ namespace kiwi { namespace engine {
         {
             const auto ninlets = m_object->getNumberOfInputs() > 0 ? m_object->getNumberOfInputs() : 1;
             const auto noutlets = m_object->getNumberOfOutputs() + 1;
-            m_inputs.resize(ninlets, {4096, 0.f});
-            m_outputs.resize(noutlets, {4096, 0.f});
+            m_inputs.resize(ninlets);
+            m_outputs.resize(noutlets);
             if(ninlets != getNumberOfInputs())
             {
                 error(std::string("faust~: " + args[2].getString() + " wrong number of inputs, " +
@@ -94,20 +94,17 @@ namespace kiwi { namespace engine {
     
     void FaustTilde::perform(dsp::Buffer const& input, dsp::Buffer& output) noexcept
     {
-        for(int i = 0; i < input.getNumberOfChannels() && i < m_inputs.size(); ++i)
+        const size_t blksize = input.getVectorSize();
+        const size_t nins    = m_inputs.size();
+        const size_t nouts   = m_outputs.size();
+        for(size_t i = 0; i < nins; ++i)
         {
-            for(int j = 0; j < input.getVectorSize(); ++j)
-            {
-                m_inputs[i][j] = input[i][j];
-            }
+            std::copy_n(input[i].data(), blksize, m_inputs[i].data());
         }
         m_object->perform(m_inputs, m_outputs);
-        for(int i = 0; i < output.getNumberOfChannels() && i < m_outputs.size(); ++i)
+        for(int i = 0; i < nouts; ++i)
         {
-            for(int j = 0; j < output.getVectorSize(); ++j)
-            {
-                output[i][j] = m_outputs[i][j];
-            }
+            std::copy_n(m_outputs[i].data(), blksize, output[i].data());
         }
     }
     

@@ -31,9 +31,6 @@
 #include <KiwiEngine/KiwiEngine_Def.h>
 
 #include <KiwiTool/KiwiTool_Scheduler.h>
-#include <KiwiTool/KiwiTool_ConcurrentQueue.h>
-
-#include <KiwiEngine/KiwiEngine_Patcher.h>
 
 #include <KiwiDsp/KiwiDsp_Processor.h>
 
@@ -41,8 +38,14 @@
 
 namespace kiwi
 {
+    namespace tool
+    {
+        class Beacon;
+    }
+    
     namespace engine
     {
+        class Patcher;
         // ================================================================================ //
         //                                      OBJECT                                      //
         // ================================================================================ //
@@ -211,7 +214,8 @@ namespace kiwi
         // ================================================================================ //
         
         //! @brief A pure interface that audio object must implement.
-        //! @brief audio objects will be held and triggered by both the engine and the dsp chain.
+        //! @details An audio objects will be held and triggered by both the engine and the dsp\n
+        //! chain.
         class AudioObject : public engine::Object, public dsp::Processor
         {
         public: // methods

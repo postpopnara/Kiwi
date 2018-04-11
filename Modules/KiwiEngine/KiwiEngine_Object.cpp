@@ -26,6 +26,10 @@
 #include <KiwiModel/KiwiModel_DocumentManager.h>
 #include <KiwiModel/KiwiModel_Object.h>
 
+#include <KiwiTool/KiwiTool_ConcurrentQueue.h>
+#include <KiwiEngine/KiwiEngine_Patcher.h>
+#include <KiwiTool/KiwiTool_Beacon.h>
+
 namespace kiwi
 {
     namespace engine
