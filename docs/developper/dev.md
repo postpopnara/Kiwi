@@ -33,9 +33,9 @@ python ./Script/configure.py
 To build Kiwi, you can either open your code editor and build the project or use our build script.
 Here is a list of tested compilers depending on your platform.
 
-* MacOs: clang 7.3.1
-* Windows: msvc 19.0
-* Linus: gcc-4.9
+- MacOs: clang 7.3.1
+- Windows: msvc 19.0
+- Linus: gcc-4.9
 
 ```shell
 python ./Script/build.py
