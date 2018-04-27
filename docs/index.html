@@ -13,22 +13,15 @@
 <body>
 
     <div class="sidenav">
-      <a class="md_link" md_link="software/getting-started.md">Getting started</a>
-      <a class="md_link" md_link="software/objects.md">Objects</a>
-      <a href="#clients">Tutorials</a>
-      <a class="md_link" md_link="software/versions.md">Versions</a>
-      <a class="md_link" md_link="developper/dev.md">Developper guide</a>
-    </div>
-
-    <div class="main" id="content">
-      <h1>Kiwi Wiki</h1>
-      <p>Welcome to our wiki !</p>
-      <p>You will find here all relevent informations on how to use kiwi as well
-      as guidance for fellow developpers eager to contribute.</p>
+        <a href="software/getting-started.html">Getting started</a>
+        <a class="md_link" md_link="software/objects.md">Objects</a>
+        <a href="#clients">Tutorials</a>
+        <a class="md_link" md_link="software/versions.md">Versions</a>
+        <a class="md_link" md_link="developper/dev.md">Developper guide</a>
     </div>
 
     <script>
-    /* Loop through all dropdown buttons to toggle between hiding and showing its dropdown content - This allows the user to have multiple dropdowns without any conflict */
+
     var dropdown = document.getElementsByClassName("dropdown-btn");
     var i;
 
@@ -43,6 +36,16 @@
         }
       });
     }
+    </script>
+
+    <div class="main" id="content">
+      <h1>Kiwi Wiki</h1>
+      <p>Welcome to our wiki !</p>
+      <p>You will find here all relevent informations on how to use kiwi as well
+      as guidance for fellow developpers eager to contribute.</p>
+    </div>
+
+    <script>
 
     var markdowns = document.getElementsByClassName("md_link");
 

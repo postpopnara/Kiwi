@@ -22,37 +22,66 @@ When Kiwi is executed three main windows appear : The Document Browser, the Beac
 
 <table style="border: 0px">
     <tr>
-        <th style="border: 0px"><img title="DocumentBrowser" src="ressources/img/emptyDocumentBrowser.png" height=500 /></th>
-        <th style="border: 0px"><img src="ressources/img/emptyBeaconDispatcher.png" height=200></th>
-        <th style="border: 0px"><img = src="ressources/img/emptyKiwiConsole.png" height=400></th>
+        <th style="border: 0px"><img title="DocumentBrowser" src="../ressources/img/emptyDocumentBrowser.png" height=500 /></th>
+        <th style="border: 0px"><img src="../ressources/img/emptyBeaconDispatcher.png" height=200></th>
+        <th style="border: 0px"><img = src="../ressources/img/emptyKiwiConsole.png" height=400></th>
     </tr>
 </table>
 
 The menu bar appears on top of your screen or as a header of Kiwi's console on windows
 
-<img title="MenuBar" src="ressources/img/barreDesMenusMacOS.png" height=30/>
+<img title="MenuBar" src="../ressources/img/barreDesMenusMacOS.png" height=30/>
 
 ## Signing up
 
 There's two options to connect to Kiwi's server: either create a user account or use an already created account. To create an account, click on 'Register' under 'Account' menu. A register window appears. Enter your username, your email adress and your passowrd. After clicking the register button the user receives a email containing a temporary link enabling him to validate his account creation.
 
-<img title="register" src="ressources/img/registerWindow.png" height=400px/>
+<img title="register" src="../ressources/img/registerWindow.png" height=400px/>
 
 
 To connect to an existing user account, click on login in the menu 'Account'. A login window shows up. Enter your email address or username and your password. If you forgot your password, you can reset using your email address by clicking on the button 'Forgot password'.
 
-<img title="register" src="ressources/img/loginWindow.png" height=400px/>
+<img title="register" src="../ressources/img/loginWindow.png" height=400px/>
 
 ## First patch
 
 At this point, you can either join a shared patch using the Document Browser window or open a local patch. In this section we will demonstrate how to open and manipulate a local patch. Instructions on how to collaborate will be given later.
 
-Pease click on this <a href="ressources/pathces/first-patch.kiwi" target='_blank_'>link</a> to download a first example and open the example with Kiwi.
+Pease click on this <a href="../ressources/pathces/first-patch.kiwi" target='_blank_'>link</a> to download a first example and open the example with Kiwi.
 
-<img title="first patch" src="ressources/img/first-patch.png" height="600px">
+<img title="first patch" src="../ressources/img/first-patch.png" height="600px">
 
 As you can see, the patch is a set of objects each one carrying out an operation. Data either control or signal data is sent between object using links. Grey connections are used to send messages (numbers, strings, lists, bang ect...) whereas green connections send signals from top to bottom.
 
 This first patch is a generator of sound (synthesis) where the top-left part is the generator. The top-right is used to trigger a gain envelope. The signal is then sent to a master gain control and the dac~ object which represents the audio output of the patch.
 
-A patch can either be in mode edition or in mode lock. In edition mode objects and links can be added, removed or edited. In mode lock, graphical objects (the gain slider is graphical is an example) are now enabled and can be manipulated to generated different sounds.
+A patch can either be in mode edition or in mode lock. In edition mode objects and links can be added, removed or edited. In mode lock, graphical objects (the gain slider is graphical is an example) are now enabled and can be manipulated to generated different sounds. To switch between mode lock and mode edition either click on the lock button
+<img title="lock" src="../ressources/img/locked.png" height=15px/>.
+
+# Objects
+
+A set of help-patches is available <a href="ressources/pathces/help/help.zip" target='_blank_'>here</a>.
+
+## pack
+
+- Description:
+
+    Creates of elements from multiple values sent.
+
+* Max name: pack
+* Pd name: pack
+* Arguments:
+
+    (list) List of first elements in the list.
+
+* Inlets
+
+    * Inlet 1:
+    * Inlet 2:
+
+
+* Outlets:
+
+* Help patch: <a href="ressources/pathces/help/pack.kiwi" target='_blank_'>download</a>
+
+[lien](https://github.com/)
