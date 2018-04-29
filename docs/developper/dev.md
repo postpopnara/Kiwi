@@ -51,7 +51,7 @@ python ./Script/build.py -t Server -c Debug
 
 ##### Tests
 
-Tests are ran as a post build command of target Tests. To run run tests
+Tests are ran as a post build command of target Tests. To run tests.
 
 ```shell
 python ./Srcipts/build.py -t Tests -c Release
@@ -60,7 +60,7 @@ python ./Srcipts/build.py -t Tests -c Release
 
 ### Code<a name="code"></a>
 
-The documentation of Kiwi's classes can be found [here](html/index.html).
+The documentation of Kiwi's classes can be found [here](../html/index.html).
 
 ### Server<a name="server"></a>
 ### Scripts<a name="scripts"></a>

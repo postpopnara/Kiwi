@@ -55,33 +55,5 @@ As you can see, the patch is a set of objects each one carrying out an operation
 
 This first patch is a generator of sound (synthesis) where the top-left part is the generator. The top-right is used to trigger a gain envelope. The signal is then sent to a master gain control and the dac~ object which represents the audio output of the patch.
 
-A patch can either be in mode edition or in mode lock. In edition mode objects and links can be added, removed or edited. In mode lock, graphical objects (the gain slider is graphical is an example) are now enabled and can be manipulated to generated different sounds. To switch between mode lock and mode edition either click on the lock button
+A patch can either be in mode edition or in mode lock. In edition mode objects and links can be added, removed or edited. In mode lock, graphical objects (the gain slider is graphical is an example) are now enabled and can be manipulated to generate different sounds. To switch between mode lock and mode edition either click on the lock button
 <img title="lock" src="../ressources/img/locked.png" height=15px/>.
-
-# Objects
-
-A set of help-patches is available <a href="ressources/pathces/help/help.zip" target='_blank_'>here</a>.
-
-## pack
-
-- Description:
-
-    Creates of elements from multiple values sent.
-
-* Max name: pack
-* Pd name: pack
-* Arguments:
-
-    (list) List of first elements in the list.
-
-* Inlets
-
-    * Inlet 1:
-    * Inlet 2:
-
-
-* Outlets:
-
-* Help patch: <a href="ressources/pathces/help/pack.kiwi" target='_blank_'>download</a>
-
-[lien](https://github.com/)
