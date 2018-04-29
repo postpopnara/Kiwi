@@ -4,7 +4,7 @@ function md_convert(id, md_url)
 
     var element = document.getElementById(id);
 
-    var converter = new showdown.Converter();
+    var converter = new showdown.Converter({tables: true, strikethrough: true});
 
     var markdown_text = "";
 
